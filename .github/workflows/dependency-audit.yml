@@ -1,0 +1,34 @@
+name: Dependency Audit
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 2 * * 1' # Weekly Monday 02:00 UTC
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+      - name: Install dependencies (prod only)
+        run: npm ci --omit=dev
+      - name: Run npm audit (high severity)
+        run: npm audit --production --audit-level=high || true
+      - name: Fail on critical vulnerabilities
+        run: |
+          npm audit --json --production > audit.json || true
+          node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('audit.json','utf8'));const advisories=d.vulnerabilities||d.advisories||{};let critical=0; if(d.metadata && d.metadata.vulnerabilities){critical=d.metadata.vulnerabilities.critical;} if(critical>0){console.error('Critical vulnerabilities found:',critical);process.exit(1);} else {console.log('No critical vulnerabilities.');}" 
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report
+          path: audit.json

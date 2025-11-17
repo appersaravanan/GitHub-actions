@@ -1,0 +1,33 @@
+{
+  "name": "github-actions-vs-teamcity-demo",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "description": "Demo comparing GitHub Actions and TeamCity CI for a Node.js TypeScript project.",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write .",
+    "test": "vitest run --reporter=default --reporter=junit --outputFile=reports/junit.xml",
+    "test:coverage": "vitest run --coverage --reporter=default --reporter=junit --outputFile=reports/junit.xml",
+    "generate:coverage-badge": "node scripts/generate-coverage-badge.js",
+    "audit": "npm audit --production --audit-level=high",
+    "prepare": "husky install"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.19",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "husky": "^9.0.0",
+    "prettier": "^3.1.1",
+    "typescript": "^5.4.0",
+    "vitest": "^1.2.0",
+    "vitest-junit-reporter": "^0.8.0",
+    "badge-maker": "^4.0.0"
+  }
+}

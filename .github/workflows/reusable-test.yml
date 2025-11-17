@@ -1,0 +1,28 @@
+name: Reusable Test
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: true
+        type: string
+      os:
+        required: true
+        type: string
+
+jobs:
+  test:
+    runs-on: ${{ inputs.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: junit-${{ inputs.node-version }}-${{ inputs.os }}
+          path: reports/junit.xml

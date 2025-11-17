@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-test-matrix:
+    name: Node ${{ matrix.node }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.os == 'macos-latest' }}
+    strategy:
+      matrix:
+        node: [18.x, 20.x, 22.x]
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Test (coverage)
+        run: npm run test:coverage
+
+      - name: Enforce coverage threshold
+        run: |
+          node -e "const fs=require('fs');const s=JSON.parse(fs.readFileSync('coverage/coverage-summary.json','utf8'));const pct=s.total.lines.pct;const threshold=90;console.log('Line coverage:',pct,'% threshold:',threshold,'%');if(pct < threshold){console.error('Coverage below threshold');process.exit(1);}"
+
+      - name: Generate coverage badge
+        run: npm run generate:coverage-badge
+
+      - name: Upload coverage badge artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-badge-${{ matrix.node }}-${{ matrix.os }}
+          path: coverage/coverage-badge.svg
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.node }}-${{ matrix.os }}
+          path: coverage
+
+      - name: Upload junit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-${{ matrix.node }}-${{ matrix.os }}
+          path: reports/junit.xml
+
+      - name: Summarize coverage
+        if: always()
+        run: |
+          node -e "const fs=require('fs');const s=JSON.parse(fs.readFileSync('coverage/coverage-summary.json','utf8'));const pct=s.total.lines.pct;const tests=fs.readFileSync('reports/junit.xml','utf8').match(/<testcase /g)?.length||0;console.log(`Coverage: ${pct}%\nTests: ${tests}`);" >> $GITHUB_STEP_SUMMARY
+
+  reusable-example:
+    uses: ./.github/workflows/reusable-test.yml
+    with:
+      node-version: '20.x'
+      os: 'ubuntu-latest'
