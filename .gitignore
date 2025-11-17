@@ -7,4 +7,3 @@ reports/
 *.tmp
 !.github/
 /.teamcity/
-package-lock.json

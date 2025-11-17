@@ -10,10 +10,8 @@ export default defineConfig({
       reportsDirectory: 'coverage',
       reporter: ['text', 'json-summary', 'lcov']
     },
-    reporters: ['default', ['vitest-junit-reporter', { outputFile: 'reports/junit.xml' }]],
     setupFiles: [],
-    onConsoleLog(log) {
-      // Prevent noisy vitest internal warnings printing in CI; keep all logs
+    onConsoleLog(log: string) {
       return false;
     },
     hooksTimeout: 30000
